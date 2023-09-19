@@ -8,12 +8,14 @@ from github.config import BASE_URL, USERNAME, PASSWORD
 class Github():
     
     def __init__(self) -> None:
+
         self.url=BASE_URL
         self.username=USERNAME
         self.password=PASSWORD
         self.followers=[]
         self.repositories=[]
         self.count_repos=0
+        self.count_followers=0
 
         self.driver=webdriver.Chrome()
         self.driver.get(self.url)
@@ -23,6 +25,7 @@ class Github():
         time.sleep(sec)
 
     def signIn(self):
+
         login=self.driver.find_element(By.CSS_SELECTOR,'[href="/login"]') 
         login.click()
         
@@ -40,7 +43,9 @@ class Github():
         
         self.wait()
 
+
     def loadRepos(self):
+
         self.driver.get(self.url+self.username)
         
         self.wait()
@@ -106,29 +111,22 @@ class Github():
 
         followers_datas=[]
 
-        url_followers='?tab=followers'
-        self.driver.get(self.url+self.username+url_followers)
+        user_profile_frame=self.driver.find_element(By.ID,"user-profile-frame").find_element(By.CSS_SELECTOR, 'div[data-hpc]')
+        followers_table=user_profile_frame.find_elements(By.CLASS_NAME, 'd-table')
 
-        self.wait()
-
-        followers_table=self.driver.find_element(By.ID,"user-profile-frame").find_element(By.CSS_SELECTOR, 'div[data-hpc]').find_elements(By.CLASS_NAME, 'd-table')
-
-         
         for followers_list in followers_table:
+            followers_datas.append(followers_list.find_elements(By.CSS_SELECTOR, 'a[data-hovercard-type="user"]'))
 
-            followers_datas.append(followers_list.find_elements(By.CSS_SELECTOR, '[data-hovercard-type="user"]'))
 
         return followers_datas
     
 
-    def getFollowers(self):
-        followers_datas=self.loadFollowers()
+    def addToFollowers(self):
 
-        user_img=''
-        full_name=''
-        user_name=''
+        followers_datas=self.loadFollowers()  
 
         for data in followers_datas:
+
             user_img=data[0].find_element(By.TAG_NAME, 'img').get_attribute('src')
             full_name=data[1].find_element(By.CSS_SELECTOR,'span.Link--primary').text
             user_name=data[1].find_element(By.CSS_SELECTOR,'span.Link--secondary').text
@@ -141,10 +139,50 @@ class Github():
 
             self.followers.append(user_infos)
 
+            self.count_followers+=1
+    
+
+    def getFollowers(self):
+
+        url_followers='?tab=followers'
+        self.driver.get(self.url+self.username+url_followers)
+
+        self.addToFollowers()
+
+        while True:
+
+            try:
+                navigation_bnt=self.driver.find_element(By.CLASS_NAME, 'pagination')
+
+                if navigation_bnt.is_displayed():
+
+                    navigation_bnt=navigation_bnt.find_elements(By.CSS_SELECTOR,'*')
+                    next_button=navigation_bnt[1]
+
+                                   
+                    if next_button.get_property("rel")=="nofollow":
+                        next_button.click()
+
+                        self.wait()
+
+                        self.addToFollowers()
+
+                    else:
+                        #print("End of the list")
+                        break
+
+            except Exception:
+                #print("Link does not exist")
+                break
+   
         return self.followers
     
+
     def getFollowersCount(self):
-        return len(self.loadFollowers())
+       
+        if self.count_followers==0:
+           self.getFollowers()
+           self.followers=[]
 
 
-            
+        return self.count_followers

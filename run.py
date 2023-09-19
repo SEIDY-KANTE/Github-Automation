@@ -3,7 +3,7 @@ import json
 
 gitBot=Github()
 
-#gitBot.signIn()
+gitBot.signIn()
 
 repositories=gitBot.getRepos()
 
@@ -15,7 +15,7 @@ for index, repo in enumerate(repositories):
 
 print("\n==================================================\n")
 
-print(f"You have : {gitBot.getFollowersCount()} Followers.")
+# print(f"You have : {gitBot.getFollowersCount()} Followers.")
 
 followers=gitBot.getFollowers()
 index=1
@@ -25,3 +25,5 @@ for follower in followers:
    print(json.dumps(follower,indent=4))
 
    index+=1
+
+#print(f"You have : {gitBot.getFollowersCount()} Followers.")
