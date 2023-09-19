@@ -100,4 +100,51 @@ class Github():
             self.loadRepos()
 
         return self.count_repos
+    
 
+    def loadFollowers(self):
+
+        followers_datas=[]
+
+        url_followers='?tab=followers'
+        self.driver.get(self.url+self.username+url_followers)
+
+        self.wait()
+
+        followers_table=self.driver.find_element(By.ID,"user-profile-frame").find_element(By.CSS_SELECTOR, 'div[data-hpc]').find_elements(By.CLASS_NAME, 'd-table')
+
+         
+        for followers_list in followers_table:
+
+            followers_datas.append(followers_list.find_elements(By.CSS_SELECTOR, '[data-hovercard-type="user"]'))
+
+        return followers_datas
+    
+
+    def getFollowers(self):
+        followers_datas=self.loadFollowers()
+
+        user_img=''
+        full_name=''
+        user_name=''
+
+        for data in followers_datas:
+            user_img=data[0].find_element(By.TAG_NAME, 'img').get_attribute('src')
+            full_name=data[1].find_element(By.CSS_SELECTOR,'span.Link--primary').text
+            user_name=data[1].find_element(By.CSS_SELECTOR,'span.Link--secondary').text
+
+            user_infos={
+                'image':user_img,
+                'username':user_name,
+                'fullname':full_name
+            }
+
+            self.followers.append(user_infos)
+
+        return self.followers
+    
+    def getFollowersCount(self):
+        return len(self.loadFollowers())
+
+
+            
